@@ -17,6 +17,8 @@ import {
 } from 'chart.js';
 import { saveAs } from 'file-saver';
 import { toPng } from 'html-to-image';
+import { jsPDF } from 'jspdf'; // Import jsPDF
+import ThreeDChart from './ThreeDChart';
 import './App.css';
 
 // Register Chart.js components
@@ -109,14 +111,42 @@ const ChartTypeButton = styled.button`
   }
 `;
 
+const TabContainer = styled.div`
+  display: flex;
+  margin-bottom: 20px;
+`;
+
+const Tab = styled.button`
+  background-color: ${props => props.active ? '#0066cc' : '#f0f0f0'};
+  color: ${props => props.active ? 'white' : 'black'};
+  border: 1px solid #ddd;
+  border-radius: 4px 4px 0 0;
+  padding: 10px 20px;
+  cursor: pointer;
+  margin-right: 5px;
+  &:hover {
+    background-color: ${props => props.active ? '#0055aa' : '#e0e0e0'};
+  }
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+`;
+
 function App() {
   const [data, setData] = useState(null);
   const [columns, setColumns] = useState([]);
   const [xAxis, setXAxis] = useState('');
   const [yAxis, setYAxis] = useState('');
+  const [zAxis, setZAxis] = useState(''); // New state for Z-axis (for 3D charts)
   const [visibleRows, setVisibleRows] = useState(5);
-  const [chartType, setChartType] = useState('bar');
+  const [selectedChartType, setSelectedChartType] = useState('bar'); // Selected chart type
+  const [activeTab, setActiveTab] = useState('2d'); // Active tab (2D or 3D)
+  const [showChart, setShowChart] = useState(false); // Whether to show the chart
   const chartRef = useRef(null);
+  const threeDRef = useRef(null);
   
   const onDrop = (acceptedFiles) => {
     const file = acceptedFiles[0];
@@ -134,6 +164,9 @@ function App() {
       if (parsedData.length > 0) {
         setColumns(Object.keys(parsedData[0]));
       }
+      
+      // Reset chart display when new file is uploaded
+      setShowChart(false);
     };
     
     reader.readAsArrayBuffer(file);
@@ -183,34 +216,106 @@ function App() {
   };
   
   const renderChart = () => {
+    if (!showChart) return null;
+    
     const chartData = getChartData();
     if (!chartData) return null;
     
-    switch (chartType) {
-      case 'bar':
-        return <Bar ref={chartRef} data={chartData} options={getChartOptions()} />;
-      case 'line':
-        return <Line ref={chartRef} data={chartData} options={getChartOptions()} />;
-      case 'pie':
-        return <Pie ref={chartRef} data={chartData} options={getChartOptions()} />;
-      case 'scatter':
-        return <Scatter ref={chartRef} data={chartData} options={getChartOptions()} />;
-      default:
-        return <Bar ref={chartRef} data={chartData} options={getChartOptions()} />;
+    if (activeTab === '2d') {
+      switch (selectedChartType) {
+        case 'bar':
+          return <Bar ref={chartRef} data={chartData} options={getChartOptions()} />;
+        case 'line':
+          return <Line ref={chartRef} data={chartData} options={getChartOptions()} />;
+        case 'pie':
+          return <Pie ref={chartRef} data={chartData} options={getChartOptions()} />;
+        case 'scatter':
+          return <Scatter ref={chartRef} data={chartData} options={getChartOptions()} />;
+        default:
+          return <Bar ref={chartRef} data={chartData} options={getChartOptions()} />;
+      }
+    } else {
+      // 3D chart rendering
+      return (
+        <ThreeDChart 
+          ref={threeDRef} 
+          data={chartData} 
+          xAxis={xAxis} 
+          yAxis={yAxis} 
+          zAxis={zAxis} 
+          chartType={selectedChartType} 
+        />
+      );
     }
   };
   
-  const downloadChart = () => {
+  const downloadChartAsPNG = () => {
+    if (activeTab === '3d') {
+      alert('PNG download is not supported for 3D charts. Please use a screenshot instead.');
+      return;
+    }
+    
     if (chartRef.current) {
       const chartContainer = chartRef.current.canvas;
       
       toPng(chartContainer)
         .then(dataUrl => {
-          saveAs(dataUrl, `${chartType}-chart.png`);
+          saveAs(dataUrl, `${selectedChartType}-chart.png`);
         })
         .catch(err => {
-          console.error('Error downloading chart:', err);
+          console.error('Error downloading chart as PNG:', err);
         });
+    }
+  };
+  
+  const downloadChartAsPDF = () => {
+    if (activeTab === '3d') {
+      alert('PDF download is not supported for 3D charts. Please use a screenshot instead.');
+      return;
+    }
+    
+    if (chartRef.current) {
+      const chartContainer = chartRef.current.canvas;
+      
+      toPng(chartContainer)
+        .then(dataUrl => {
+          const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+          });
+          
+          // Calculate aspect ratio to maintain proportions
+          const imgProps = pdf.getImageProperties(dataUrl);
+          const pdfWidth = pdf.internal.pageSize.getWidth() - 20; // margins
+          const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+          
+          // Add chart title
+          pdf.setFontSize(16);
+          pdf.text(`${yAxis} vs ${xAxis}`, 10, 10);
+          
+          // Add chart image
+          pdf.addImage(dataUrl, 'PNG', 10, 20, pdfWidth, pdfHeight);
+          
+          // Add metadata
+          pdf.setFontSize(10);
+          pdf.text(`Generated on: ${new Date().toLocaleString()}`, 10, pdf.internal.pageSize.getHeight() - 10);
+          
+          pdf.save(`${selectedChartType}-chart.pdf`);
+        })
+        .catch(err => {
+          console.error('Error downloading chart as PDF:', err);
+        });
+    }
+  };
+  
+  const handleGenerateChart = () => {
+    if ((activeTab === '2d' && xAxis && yAxis) || 
+        (activeTab === '3d' && xAxis && yAxis && zAxis)) {
+      setShowChart(true);
+    } else {
+      alert(activeTab === '2d' 
+        ? 'Please select both X and Y axes before generating the chart.' 
+        : 'Please select X, Y, and Z axes before generating the 3D chart.');
     }
   };
   
@@ -228,74 +333,153 @@ function App() {
       </DropzoneContainer>
       
       {columns.length > 0 && (
-        <SelectContainer>
-          <div>
-            <label htmlFor="x-axis">X-Axis: </label>
-            <Select 
-              id="x-axis"
-              value={xAxis} 
-              onChange={(e) => setXAxis(e.target.value)}
+        <>
+          <TabContainer>
+            <Tab 
+              active={activeTab === '2d'} 
+              onClick={() => {
+                setActiveTab('2d');
+                setShowChart(false);
+              }}
             >
-              <option value="">Select X-Axis</option>
-              {columns.map((column) => (
-                <option key={column} value={column}>{column}</option>
-              ))}
-            </Select>
-          </div>
+              2D Charts
+            </Tab>
+            <Tab 
+              active={activeTab === '3d'} 
+              onClick={() => {
+                setActiveTab('3d');
+                setShowChart(false);
+              }}
+            >
+              3D Charts
+            </Tab>
+          </TabContainer>
           
-          <div>
-            <label htmlFor="y-axis">Y-Axis: </label>
-            <Select 
-              id="y-axis"
-              value={yAxis} 
-              onChange={(e) => setYAxis(e.target.value)}
-            >
-              <option value="">Select Y-Axis</option>
-              {columns.map((column) => (
-                <option key={column} value={column}>{column}</option>
-              ))}
-            </Select>
-          </div>
-        </SelectContainer>
-      )}
-      
-      {xAxis && yAxis && (
-        <ChartContainer>
-          <h2>Chart Visualization</h2>
+          <SelectContainer>
+            <div>
+              <label htmlFor="x-axis">X-Axis: </label>
+              <Select 
+                id="x-axis"
+                value={xAxis} 
+                onChange={(e) => setXAxis(e.target.value)}
+              >
+                <option value="">Select X-Axis</option>
+                {columns.map((column) => (
+                  <option key={column} value={column}>{column}</option>
+                ))}
+              </Select>
+            </div>
+            
+            <div>
+              <label htmlFor="y-axis">Y-Axis: </label>
+              <Select 
+                id="y-axis"
+                value={yAxis} 
+                onChange={(e) => setYAxis(e.target.value)}
+              >
+                <option value="">Select Y-Axis</option>
+                {columns.map((column) => (
+                  <option key={column} value={column}>{column}</option>
+                ))}
+              </Select>
+            </div>
+            
+            {activeTab === '3d' && (
+              <div>
+                <label htmlFor="z-axis">Z-Axis: </label>
+                <Select 
+                  id="z-axis"
+                  value={zAxis} 
+                  onChange={(e) => setZAxis(e.target.value)}
+                >
+                  <option value="">Select Z-Axis</option>
+                  {columns.map((column) => (
+                    <option key={column} value={column}>{column}</option>
+                  ))}
+                </Select>
+              </div>
+            )}
+          </SelectContainer>
           
           <ChartTypeContainer>
-            <ChartTypeButton 
-              active={chartType === 'bar'} 
-              onClick={() => setChartType('bar')}
-            >
-              Bar Chart
-            </ChartTypeButton>
-            <ChartTypeButton 
-              active={chartType === 'line'} 
-              onClick={() => setChartType('line')}
-            >
-              Line Chart
-            </ChartTypeButton>
-            <ChartTypeButton 
-              active={chartType === 'pie'} 
-              onClick={() => setChartType('pie')}
-            >
-              Pie Chart
-            </ChartTypeButton>
-            <ChartTypeButton 
-              active={chartType === 'scatter'} 
-              onClick={() => setChartType('scatter')}
-            >
-              Scatter Plot
-            </ChartTypeButton>
+            {activeTab === '2d' ? (
+              // 2D Chart Types
+              <>
+                <ChartTypeButton 
+                  active={selectedChartType === 'bar'} 
+                  onClick={() => setSelectedChartType('bar')}
+                >
+                  Bar Chart
+                </ChartTypeButton>
+                <ChartTypeButton 
+                  active={selectedChartType === 'line'} 
+                  onClick={() => setSelectedChartType('line')}
+                >
+                  Line Chart
+                </ChartTypeButton>
+                <ChartTypeButton 
+                  active={selectedChartType === 'pie'} 
+                  onClick={() => setSelectedChartType('pie')}
+                >
+                  Pie Chart
+                </ChartTypeButton>
+                <ChartTypeButton 
+                  active={selectedChartType === 'scatter'} 
+                  onClick={() => setSelectedChartType('scatter')}
+                >
+                  Scatter Plot
+                </ChartTypeButton>
+              </>
+            ) : (
+              // 3D Chart Types
+              <>
+                <ChartTypeButton 
+                  active={selectedChartType === 'column3d'} 
+                  onClick={() => setSelectedChartType('column3d')}
+                >
+                  3D Column
+                </ChartTypeButton>
+                <ChartTypeButton 
+                  active={selectedChartType === 'bar3d'} 
+                  onClick={() => setSelectedChartType('bar3d')}
+                >
+                  3D Bar
+                </ChartTypeButton>
+                <ChartTypeButton 
+                  active={selectedChartType === 'scatter3d'} 
+                  onClick={() => setSelectedChartType('scatter3d')}
+                >
+                  3D Scatter
+                </ChartTypeButton>
+                <ChartTypeButton 
+                  active={selectedChartType === 'surface3d'} 
+                  onClick={() => setSelectedChartType('surface3d')}
+                >
+                  3D Surface
+                </ChartTypeButton>
+              </>
+            )}
           </ChartTypeContainer>
           
-          <div style={{ marginBottom: '20px' }}>
-            {renderChart()}
-          </div>
+          <Button onClick={handleGenerateChart}>Generate Chart</Button>
           
-          <Button onClick={downloadChart}>Download Chart</Button>
-        </ChartContainer>
+          {showChart && (
+            <ChartContainer>
+              <h2>Chart Visualization</h2>
+              
+              <div style={{ marginBottom: '20px' }}>
+                {renderChart()}
+              </div>
+              
+              {activeTab === '2d' && (
+                <ButtonContainer>
+                  <Button onClick={downloadChartAsPNG}>Download as PNG</Button>
+                  <Button onClick={downloadChartAsPDF}>Download as PDF</Button>
+                </ButtonContainer>
+              )}
+            </ChartContainer>
+          )}
+        </>
       )}
       
       {data && (
