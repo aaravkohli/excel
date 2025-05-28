@@ -17,8 +17,9 @@ import {
 } from 'chart.js';
 import { saveAs } from 'file-saver';
 import { toPng } from 'html-to-image';
-import { jsPDF } from 'jspdf'; // Import jsPDF
+import { jsPDF } from 'jspdf';
 import ThreeDChart from './ThreeDChart';
+import AIInsights from './AIInsights'; // Moved import to the top
 import './App.css';
 
 // Register Chart.js components
@@ -100,14 +101,28 @@ const ChartTypeContainer = styled.div`
 `;
 
 const ChartTypeButton = styled.button`
-  background-color: ${props => props.active ? '#0066cc' : '#f0f0f0'};
-  color: ${props => props.active ? 'white' : 'black'};
+  background-color: ${props => props.$active === "true" ? '#0066cc' : '#f0f0f0'};
+  color: ${props => props.$active === "true" ? 'white' : 'black'};
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 8px 16px;
   cursor: pointer;
   &:hover {
-    background-color: ${props => props.active ? '#0055aa' : '#e0e0e0'};
+    background-color: ${props => props.$active === "true" ? '#0055aa' : '#e0e0e0'};
+  }
+`;
+
+// Removed duplicate Tab component definition
+const Tab = styled.button`
+  background-color: ${props => props.$active === "true" ? '#0066cc' : '#f0f0f0'};
+  color: ${props => props.$active === "true" ? 'white' : 'black'};
+  border: 1px solid #ddd;
+  border-radius: 4px 4px 0 0;
+  padding: 10px 20px;
+  cursor: pointer;
+  margin-right: 5px;
+  &:hover {
+    background-color: ${props => props.$active === "true" ? '#0055aa' : '#e0e0e0'};
   }
 `;
 
@@ -116,24 +131,13 @@ const TabContainer = styled.div`
   margin-bottom: 20px;
 `;
 
-const Tab = styled.button`
-  background-color: ${props => props.active ? '#0066cc' : '#f0f0f0'};
-  color: ${props => props.active ? 'white' : 'black'};
-  border: 1px solid #ddd;
-  border-radius: 4px 4px 0 0;
-  padding: 10px 20px;
-  cursor: pointer;
-  margin-right: 5px;
-  &:hover {
-    background-color: ${props => props.active ? '#0055aa' : '#e0e0e0'};
-  }
-`;
-
 const ButtonContainer = styled.div`
   display: flex;
   gap: 10px;
   margin-top: 15px;
 `;
+
+// Removed the JSX block that was outside the component
 
 function App() {
   const [data, setData] = useState(null);
@@ -335,8 +339,9 @@ function App() {
       {columns.length > 0 && (
         <>
           <TabContainer>
+            {/* For Tab components */}
             <Tab 
-              active={activeTab === '2d'} 
+              $active={(activeTab === '2d').toString()} 
               onClick={() => {
                 setActiveTab('2d');
                 setShowChart(false);
@@ -345,7 +350,7 @@ function App() {
               2D Charts
             </Tab>
             <Tab 
-              active={activeTab === '3d'} 
+              $active={(activeTab === '3d').toString()} 
               onClick={() => {
                 setActiveTab('3d');
                 setShowChart(false);
@@ -406,25 +411,25 @@ function App() {
               // 2D Chart Types
               <>
                 <ChartTypeButton 
-                  active={selectedChartType === 'bar'} 
+                  $active={(selectedChartType === 'bar').toString()} 
                   onClick={() => setSelectedChartType('bar')}
                 >
                   Bar Chart
                 </ChartTypeButton>
                 <ChartTypeButton 
-                  active={selectedChartType === 'line'} 
+                  $active={(selectedChartType === 'line').toString()} 
                   onClick={() => setSelectedChartType('line')}
                 >
                   Line Chart
                 </ChartTypeButton>
                 <ChartTypeButton 
-                  active={selectedChartType === 'pie'} 
+                  $active={(selectedChartType === 'pie').toString()} 
                   onClick={() => setSelectedChartType('pie')}
                 >
                   Pie Chart
                 </ChartTypeButton>
                 <ChartTypeButton 
-                  active={selectedChartType === 'scatter'} 
+                  $active={(selectedChartType === 'scatter').toString()} 
                   onClick={() => setSelectedChartType('scatter')}
                 >
                   Scatter Plot
@@ -434,25 +439,25 @@ function App() {
               // 3D Chart Types
               <>
                 <ChartTypeButton 
-                  active={selectedChartType === 'column3d'} 
+                  $active={(selectedChartType === 'column3d').toString()} 
                   onClick={() => setSelectedChartType('column3d')}
                 >
                   3D Column
                 </ChartTypeButton>
                 <ChartTypeButton 
-                  active={selectedChartType === 'bar3d'} 
+                  $active={(selectedChartType === 'bar3d').toString()} 
                   onClick={() => setSelectedChartType('bar3d')}
                 >
                   3D Bar
                 </ChartTypeButton>
                 <ChartTypeButton 
-                  active={selectedChartType === 'scatter3d'} 
+                  $active={(selectedChartType === 'scatter3d').toString()} 
                   onClick={() => setSelectedChartType('scatter3d')}
                 >
                   3D Scatter
                 </ChartTypeButton>
                 <ChartTypeButton 
-                  active={selectedChartType === 'surface3d'} 
+                  $active={(selectedChartType === 'surface3d').toString()} 
                   onClick={() => setSelectedChartType('surface3d')}
                 >
                   3D Surface
@@ -464,20 +469,31 @@ function App() {
           <Button onClick={handleGenerateChart}>Generate Chart</Button>
           
           {showChart && (
-            <ChartContainer>
-              <h2>Chart Visualization</h2>
+            <>
+              <ChartContainer>
+                <h2>Chart Visualization</h2>
+                
+                <div style={{ marginBottom: '20px' }}>
+                  {renderChart()}
+                </div>
+                
+                {activeTab === '2d' && (
+                  <ButtonContainer>
+                    <Button onClick={downloadChartAsPNG}>Download as PNG</Button>
+                    <Button onClick={downloadChartAsPDF}>Download as PDF</Button>
+                  </ButtonContainer>
+                )}
+              </ChartContainer>
               
-              <div style={{ marginBottom: '20px' }}>
-                {renderChart()}
-              </div>
-              
-              {activeTab === '2d' && (
-                <ButtonContainer>
-                  <Button onClick={downloadChartAsPNG}>Download as PNG</Button>
-                  <Button onClick={downloadChartAsPDF}>Download as PDF</Button>
-                </ButtonContainer>
-              )}
-            </ChartContainer>
+              {/* Add AIInsights component */}
+              <AIInsights 
+                data={data} 
+                xAxis={xAxis} 
+                yAxis={yAxis} 
+                zAxis={zAxis}
+                chartType={activeTab === '3d' ? '3D' : selectedChartType}
+              />
+            </>
           )}
         </>
       )}
