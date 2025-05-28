@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 
-// Bar mesh for column charts
 const BarMesh = ({ position, height, color }) => {
   return (
     <mesh position={position}>
@@ -13,7 +12,6 @@ const BarMesh = ({ position, height, color }) => {
   );
 };
 
-// Horizontal bar mesh for bar charts
 const HorizontalBarMesh = ({ position, width, color }) => {
   return (
     <mesh position={position}>
@@ -23,7 +21,6 @@ const HorizontalBarMesh = ({ position, width, color }) => {
   );
 };
 
-// Scatter point mesh
 const ScatterPointMesh = ({ position, size, color }) => {
   return (
     <mesh position={position}>
@@ -33,7 +30,6 @@ const ScatterPointMesh = ({ position, size, color }) => {
   );
 };
 
-// Surface mesh for 3D surface plots
 const SurfaceMesh = ({ data, xAxis, yAxis, zAxis }) => {
   const meshRef = useRef();
   
@@ -43,13 +39,11 @@ const SurfaceMesh = ({ data, xAxis, yAxis, zAxis }) => {
     const geometry = new THREE.PlaneGeometry(10, 10, data.labels.length - 1, data.datasets[0].data.length - 1);
     const positions = geometry.attributes.position.array;
     
-    // Create a height map based on data values
     for (let i = 0; i < positions.length; i += 3) {
       const x = Math.floor((i / 3) % data.labels.length);
       const z = Math.floor((i / 3) / data.labels.length);
       
       if (x < data.labels.length && z < data.datasets[0].data.length) {
-        // Set height (y) based on data value
         positions[i + 1] = data.datasets[0].data[z] / 10;
       }
     }
@@ -79,7 +73,6 @@ const ThreeDScene = ({ data, xAxis, yAxis, zAxis, chartType }) => {
   const values = data.datasets[0].data;
   const maxValue = Math.max(...values);
   
-  // Render different chart types
   const renderChartType = () => {
     switch (chartType) {
       case 'column3d':
@@ -117,7 +110,7 @@ const ThreeDScene = ({ data, xAxis, yAxis, zAxis, chartType }) => {
           const normalizedSize = (value / maxValue) * 0.5 + 0.1;
           const xPos = index - (values.length / 2) + 0.5;
           const yPos = value / maxValue * 3;
-          const zPos = (index % 3) - 1; // Add some variation in z-axis
+          const zPos = (index % 3) - 1; 
           
           return (
             <ScatterPointMesh 
@@ -158,7 +151,6 @@ const ThreeDScene = ({ data, xAxis, yAxis, zAxis, chartType }) => {
       
       {renderChartType()}
       
-      {/* X-axis labels */}
       <group position={[0, -0.5, 0]}>
         {data.labels.map((label, index) => {
           const xPos = index - (data.labels.length / 2) + 0.5;

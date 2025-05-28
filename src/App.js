@@ -19,10 +19,8 @@ import { saveAs } from 'file-saver';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import ThreeDChart from './ThreeDChart';
-import AIInsights from './AIInsights'; // Moved import to the top
-import './App.css';
+import AIInsights from './AIInsights';
 
-// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -112,7 +110,6 @@ const ChartTypeButton = styled.button`
   }
 `;
 
-// Removed duplicate Tab component definition
 const Tab = styled.button`
   background-color: ${props => props.$active === "true" ? '#0066cc' : '#f0f0f0'};
   color: ${props => props.$active === "true" ? 'white' : 'black'};
@@ -137,18 +134,17 @@ const ButtonContainer = styled.div`
   margin-top: 15px;
 `;
 
-// Removed the JSX block that was outside the component
 
 function App() {
   const [data, setData] = useState(null);
   const [columns, setColumns] = useState([]);
   const [xAxis, setXAxis] = useState('');
   const [yAxis, setYAxis] = useState('');
-  const [zAxis, setZAxis] = useState(''); // New state for Z-axis (for 3D charts)
+  const [zAxis, setZAxis] = useState(''); 
   const [visibleRows, setVisibleRows] = useState(5);
-  const [selectedChartType, setSelectedChartType] = useState('bar'); // Selected chart type
-  const [activeTab, setActiveTab] = useState('2d'); // Active tab (2D or 3D)
-  const [showChart, setShowChart] = useState(false); // Whether to show the chart
+  const [selectedChartType, setSelectedChartType] = useState('bar');
+  const [activeTab, setActiveTab] = useState('2d');
+  const [showChart, setShowChart] = useState(false); 
   const chartRef = useRef(null);
   const threeDRef = useRef(null);
   
@@ -164,12 +160,10 @@ function App() {
       
       setData(parsedData);
       
-      // Extract column headers
       if (parsedData.length > 0) {
         setColumns(Object.keys(parsedData[0]));
       }
       
-      // Reset chart display when new file is uploaded
       setShowChart(false);
     };
     
@@ -239,7 +233,6 @@ function App() {
           return <Bar ref={chartRef} data={chartData} options={getChartOptions()} />;
       }
     } else {
-      // 3D chart rendering
       return (
         <ThreeDChart 
           ref={threeDRef} 
@@ -288,19 +281,15 @@ function App() {
             unit: 'mm',
           });
           
-          // Calculate aspect ratio to maintain proportions
           const imgProps = pdf.getImageProperties(dataUrl);
           const pdfWidth = pdf.internal.pageSize.getWidth() - 20; // margins
           const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
           
-          // Add chart title
           pdf.setFontSize(16);
           pdf.text(`${yAxis} vs ${xAxis}`, 10, 10);
           
-          // Add chart image
           pdf.addImage(dataUrl, 'PNG', 10, 20, pdfWidth, pdfHeight);
           
-          // Add metadata
           pdf.setFontSize(10);
           pdf.text(`Generated on: ${new Date().toLocaleString()}`, 10, pdf.internal.pageSize.getHeight() - 10);
           
@@ -339,7 +328,6 @@ function App() {
       {columns.length > 0 && (
         <>
           <TabContainer>
-            {/* For Tab components */}
             <Tab 
               $active={(activeTab === '2d').toString()} 
               onClick={() => {
@@ -408,7 +396,6 @@ function App() {
           
           <ChartTypeContainer>
             {activeTab === '2d' ? (
-              // 2D Chart Types
               <>
                 <ChartTypeButton 
                   $active={(selectedChartType === 'bar').toString()} 
@@ -436,7 +423,6 @@ function App() {
                 </ChartTypeButton>
               </>
             ) : (
-              // 3D Chart Types
               <>
                 <ChartTypeButton 
                   $active={(selectedChartType === 'column3d').toString()} 
@@ -485,7 +471,6 @@ function App() {
                 )}
               </ChartContainer>
               
-              {/* Add AIInsights component */}
               <AIInsights 
                 data={data} 
                 xAxis={xAxis} 

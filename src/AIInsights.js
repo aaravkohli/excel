@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import ReactMarkdown from 'react-markdown';
 
-// Debug: Log available environment variables
 console.log('Available environment variables:', 
   Object.keys(process.env)
     .filter(key => key.startsWith('REACT_APP_'))
@@ -77,7 +76,6 @@ const AIInsights = ({ data, xAxis, yAxis, chartType, zAxis }) => {
       return;
     }
 
-    // Check required parameters based on chart type
     if (chartType === '3D') {
       if (!xAxis || !yAxis || !zAxis) {
         setError('For 3D visualization, please select X, Y, and Z axes to generate insights.');
@@ -94,16 +92,14 @@ const AIInsights = ({ data, xAxis, yAxis, chartType, zAxis }) => {
     setError(null);
     
     try {
-      // Prepare data for the API
       const dataForAnalysis = {
         chartType,
         xAxis,
         yAxis,
-        ...(chartType === '3D' && { zAxis }), // Include zAxis only for 3D charts
-        data: data.slice(0, 100), // Limit to 100 rows to avoid large payloads
+        ...(chartType === '3D' && { zAxis }), 
+        data: data.slice(0, 100), 
       };
       
-      // Debug: Check if API key exists and is valid
       const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
       console.log('Environment variables available:', Object.keys(process.env).filter(key => key.startsWith('REACT_APP_')));
       if (!apiKey) {
@@ -145,7 +141,7 @@ const AIInsights = ({ data, xAxis, yAxis, chartType, zAxis }) => {
       }
 
       const result = await response.json();
-      console.log('API Response:', result); // Debug log
+      console.log('API Response:', result);
       
       if (!result.candidates?.[0]?.content?.parts?.[0]?.text) {
         throw new Error('Unexpected API response format');
@@ -153,17 +149,15 @@ const AIInsights = ({ data, xAxis, yAxis, chartType, zAxis }) => {
       
       const text = result.candidates[0].content.parts[0].text;
       
-      // Parse the insights from the response
       const parsedInsights = text
         .split('\n')
         .filter(line => line.trim().length > 0)
-        .map(line => line.replace(/^\d+\.\s*/, '').trim()); // Remove numbering
+        .map(line => line.replace(/^\d+\.\s*/, '').trim()); 
       
       setInsights(parsedInsights);
     } catch (err) {
       console.error('Error generating insights:', err);
       
-      // Handle specific error cases
       if (err.message?.includes('quota')) {
         setError('API quota exceeded. Please try again later or check your Gemini API quota.');
       } else if (err.message?.includes('API key')) {
