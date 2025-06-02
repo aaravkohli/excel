@@ -3,29 +3,97 @@ import * as THREE from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 
+const generateVibrantColor = (index, total) => {
+  const opacity = 0.7 + (index % 3) * 0.1;
+  return `rgba(59, 130, 246, ${opacity})`;
+};
+
+const useScaleAnimation = (initialScale = 0, targetScale = 1, speed = 0.05) => {
+  const ref = useRef();
+  
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.scale.set(initialScale, initialScale, initialScale);
+      
+      const animate = () => {
+        if (ref.current.scale.x < targetScale) {
+          const scale = ref.current.scale.x + speed;
+          ref.current.scale.set(scale, scale, scale);
+          requestAnimationFrame(animate);
+        }
+      };
+      
+      animate();
+    }
+  }, [initialScale, targetScale, speed]);
+  
+  return ref;
+};
+
 const BarMesh = ({ position, height, color }) => {
+  const meshRef = useRef();
+  
+  useEffect(() => {
+    if (meshRef.current) {
+      meshRef.current.scale.y = 0;
+      meshRef.current.position.y = 0;
+      
+      const animate = () => {
+        if (meshRef.current.scale.y < 1) {
+          meshRef.current.scale.y += 0.05;
+          meshRef.current.position.y = (height * meshRef.current.scale.y) / 2;
+          requestAnimationFrame(animate);
+        }
+      };
+      
+      animate();
+    }
+  }, [height]);
+  
   return (
-    <mesh position={position}>
+    <mesh ref={meshRef} position={[position[0], 0, position[2]]}>
       <boxGeometry args={[0.5, height, 0.5]} />
-      <meshStandardMaterial color={color} />
+      <meshStandardMaterial 
+        color={color} 
+        metalness={0.4}
+        roughness={0.3}
+        emissive={color}
+        emissiveIntensity={0.2}
+      />
     </mesh>
   );
 };
 
 const HorizontalBarMesh = ({ position, width, color }) => {
+  const meshRef = useScaleAnimation();
+  
   return (
-    <mesh position={position}>
+    <mesh ref={meshRef} position={[0, position[1], position[2]]}>
       <boxGeometry args={[width, 0.5, 0.5]} />
-      <meshStandardMaterial color={color} />
+      <meshStandardMaterial 
+        color={color} 
+        metalness={0.4}
+        roughness={0.3}
+        emissive={color}
+        emissiveIntensity={0.2}
+      />
     </mesh>
   );
 };
 
 const ScatterPointMesh = ({ position, size, color }) => {
+  const meshRef = useScaleAnimation();
+  
   return (
-    <mesh position={position}>
-      <sphereGeometry args={[size, 16, 16]} />
-      <meshStandardMaterial color={color} />
+    <mesh ref={meshRef} position={position}>
+      <sphereGeometry args={[size, 32, 32]} />
+      <meshStandardMaterial 
+        color={color} 
+        metalness={0.4}
+        roughness={0.3}
+        emissive={color}
+        emissiveIntensity={0.2}
+      />
     </mesh>
   );
 };
@@ -50,12 +118,29 @@ const SurfaceMesh = ({ data, xAxis, yAxis, zAxis }) => {
     
     geometry.computeVertexNormals();
     meshRef.current.geometry = geometry;
+    
+    meshRef.current.material.opacity = 0;
+    const animate = () => {
+      if (meshRef.current.material.opacity < 1) {
+        meshRef.current.material.opacity += 0.02;
+        requestAnimationFrame(animate);
+      }
+    };
+    animate();
   }, [data, xAxis, yAxis, zAxis]);
   
   return (
     <mesh ref={meshRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
       <planeGeometry args={[10, 10, 20, 20]} />
-      <meshPhongMaterial color="#6495ED" wireframe={false} side={THREE.DoubleSide} />
+      <meshPhongMaterial 
+        color="#3b82f6" 
+        wireframe={false} 
+        side={THREE.DoubleSide}
+        transparent
+        opacity={0}
+        shininess={100}
+        specular="#ffffff"
+      />
     </mesh>
   );
 };
@@ -79,13 +164,14 @@ const ThreeDScene = ({ data, xAxis, yAxis, zAxis, chartType }) => {
         return values.map((value, index) => {
           const normalizedHeight = (value / maxValue) * 5 || 0.1;
           const xPos = index - (values.length / 2) + 0.5;
+          const color = generateVibrantColor(index, values.length);
           
           return (
             <BarMesh 
               key={index} 
               position={[xPos, normalizedHeight / 2, 0]} 
               height={normalizedHeight} 
-              color={`hsl(${(index / values.length) * 360}, 70%, 60%)`} 
+              color={color}
             />
           );
         });
@@ -94,13 +180,14 @@ const ThreeDScene = ({ data, xAxis, yAxis, zAxis, chartType }) => {
         return values.map((value, index) => {
           const normalizedWidth = (value / maxValue) * 5 || 0.1;
           const yPos = index - (values.length / 2) + 0.5;
+          const color = generateVibrantColor(index, values.length);
           
           return (
             <HorizontalBarMesh 
               key={index} 
               position={[normalizedWidth / 2, yPos, 0]} 
               width={normalizedWidth} 
-              color={`hsl(${(index / values.length) * 360}, 70%, 60%)`} 
+              color={color}
             />
           );
         });
@@ -110,14 +197,15 @@ const ThreeDScene = ({ data, xAxis, yAxis, zAxis, chartType }) => {
           const normalizedSize = (value / maxValue) * 0.5 + 0.1;
           const xPos = index - (values.length / 2) + 0.5;
           const yPos = value / maxValue * 3;
-          const zPos = (index % 3) - 1; 
+          const zPos = (index % 3) - 1;
+          const color = generateVibrantColor(index, values.length);
           
           return (
             <ScatterPointMesh 
               key={index} 
               position={[xPos, yPos, zPos]} 
               size={normalizedSize} 
-              color={`hsl(${(index / values.length) * 360}, 70%, 60%)`} 
+              color={color}
             />
           );
         });
@@ -129,13 +217,14 @@ const ThreeDScene = ({ data, xAxis, yAxis, zAxis, chartType }) => {
         return values.map((value, index) => {
           const normalizedHeight = (value / maxValue) * 5 || 0.1;
           const xPos = index - (values.length / 2) + 0.5;
+          const color = generateVibrantColor(index, values.length);
           
           return (
             <BarMesh 
               key={index} 
               position={[xPos, normalizedHeight / 2, 0]} 
               height={normalizedHeight} 
-              color={`hsl(${(index / values.length) * 360}, 70%, 60%)`} 
+              color={color}
             />
           );
         });
@@ -144,10 +233,22 @@ const ThreeDScene = ({ data, xAxis, yAxis, zAxis, chartType }) => {
   
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} />
+      <ambientLight intensity={0.6} />
+      <pointLight position={[10, 10, 10]} intensity={1.2} />
+      <pointLight position={[-10, -10, -10]} intensity={0.6} />
       <gridHelper args={[10, 10]} />
-      <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} />
+      <OrbitControls 
+        enablePan={true} 
+        enableZoom={true} 
+        enableRotate={true}
+        rotateSpeed={0.5}
+        zoomSpeed={0.5}
+        panSpeed={0.5}
+        minDistance={3}
+        maxDistance={20}
+        minPolarAngle={0}
+        maxPolarAngle={Math.PI}
+      />
       
       {renderChartType()}
       
@@ -170,13 +271,30 @@ const ThreeDChart = ({ data, xAxis, yAxis, zAxis, chartType }) => {
   const canvasRef = useRef();
   
   return (
-    <div style={{ width: '100%', height: '400px', position: 'relative' }}>
+    <div style={{ 
+      width: '100%', 
+      height: '400px', 
+      position: 'relative',
+      borderRadius: '8px',
+      overflow: 'hidden',
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+    }}>
       <Canvas ref={canvasRef}>
         <ThreeDScene data={data} xAxis={xAxis} yAxis={yAxis} zAxis={zAxis} chartType={chartType} />
       </Canvas>
       
-      <div style={{ position: 'absolute', bottom: '10px', left: '10px', color: '#333', background: 'rgba(255,255,255,0.7)', padding: '5px', borderRadius: '3px' }}>
-        <p style={{ margin: '0', fontSize: '12px' }}>Drag to rotate | Scroll to zoom</p>
+      <div style={{ 
+        position: 'absolute', 
+        bottom: '10px', 
+        left: '10px', 
+        color: '#333', 
+        background: 'rgba(255,255,255,0.9)', 
+        padding: '8px 12px', 
+        borderRadius: '4px',
+        fontSize: '12px',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+      }}>
+        <p style={{ margin: '0' }}>Drag to rotate | Scroll to zoom</p>
       </div>
     </div>
   );

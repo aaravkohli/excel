@@ -34,14 +34,20 @@ ChartJS.register(
 );
 
 const DropzoneContainer = styled.div`
-  border: 2px dashed #cccccc;
-  border-radius: 4px;
-  padding: 20px;
+  border: 2px dashed #94a3b8;
+  border-radius: 8px;
+  padding: 40px;
   text-align: center;
   margin: 20px 0;
   cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  
   &:hover {
-    border-color: #0066cc;
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.1);
   }
 `;
 
@@ -49,6 +55,8 @@ const Container = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  min-height: 100vh;
 `;
 
 const SelectContainer = styled.div`
@@ -63,23 +71,29 @@ const Select = styled.select`
   border: 1px solid #ccc;
 `;
 
-const ControlsContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-`;
-
 const Button = styled.button`
-  background-color: #0066cc;
+  background-color: #3b82f6;
   color: white;
   border: none;
   border-radius: 4px;
   padding: 8px 16px;
   cursor: pointer;
   margin-right: 10px;
+  transition: all 0.2s ease;
+  
   &:hover {
-    background-color: #0055aa;
+    background-color: #2563eb;
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    background-color: #94a3b8;
+    cursor: not-allowed;
+    transform: none;
   }
 `;
 
@@ -87,8 +101,15 @@ const ChartContainer = styled.div`
   margin: 30px 0;
   padding: 20px;
   border: 1px solid #eee;
-  border-radius: 4px;
+  border-radius: 8px;
   background-color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
 `;
 
 const ChartTypeContainer = styled.div`
@@ -99,27 +120,36 @@ const ChartTypeContainer = styled.div`
 `;
 
 const ChartTypeButton = styled.button`
-  background-color: ${props => props.$active === "true" ? '#0066cc' : '#f0f0f0'};
-  color: ${props => props.$active === "true" ? 'white' : 'black'};
-  border: 1px solid #ddd;
+  background-color: ${props => props.$active === "true" ? '#3b82f6' : '#f1f5f9'};
+  color: ${props => props.$active === "true" ? 'white' : '#475569'};
+  border: 1px solid #e2e8f0;
   border-radius: 4px;
   padding: 8px 16px;
   cursor: pointer;
+  transition: all 0.2s ease;
+  
   &:hover {
-    background-color: ${props => props.$active === "true" ? '#0055aa' : '#e0e0e0'};
+    background-color: ${props => props.$active === "true" ? '#2563eb' : '#e2e8f0'};
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
   }
 `;
 
 const Tab = styled.button`
-  background-color: ${props => props.$active === "true" ? '#0066cc' : '#f0f0f0'};
-  color: ${props => props.$active === "true" ? 'white' : 'black'};
-  border: 1px solid #ddd;
+  background-color: ${props => props.$active === "true" ? '#3b82f6' : '#f1f5f9'};
+  color: ${props => props.$active === "true" ? 'white' : '#475569'};
+  border: 1px solid #e2e8f0;
   border-radius: 4px 4px 0 0;
   padding: 10px 20px;
   cursor: pointer;
   margin-right: 5px;
+  transition: all 0.2s ease;
+  
   &:hover {
-    background-color: ${props => props.$active === "true" ? '#0055aa' : '#e0e0e0'};
+    background-color: ${props => props.$active === "true" ? '#2563eb' : '#e2e8f0'};
   }
 `;
 
@@ -134,6 +164,115 @@ const ButtonContainer = styled.div`
   margin-top: 15px;
 `;
 
+const TableContainer = styled.div`
+  margin: 30px 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const StyledTable = styled.table`
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  
+  th {
+    background-color: #f8fafc;
+    color: #1e293b;
+    font-weight: 600;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #475569;
+  }
+  
+  tr:hover {
+    background-color: #f8fafc;
+  }
+  
+  tr:last-child td {
+    border-bottom: none;
+  }
+`;
+
+const TableHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  
+  h2 {
+    color: #1e293b;
+    margin: 0;
+    font-weight: 600;
+  }
+`;
+
+const TableControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  
+  label {
+    color: #64748b;
+    font-weight: 500;
+  }
+  
+  select {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    background-color: white;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      border-color: #3b82f6;
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+  }
+`;
+
+const TableFooter = styled.p`
+  padding: 15px 20px;
+  margin: 0;
+  color: #64748b;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  font-size: 0.9em;
+`;
+
+const generateColors = (count) => {
+  const colorArray = [];
+  for (let i = 0; i < count; i++) {
+    const opacity = 0.7 + (i % 3) * 0.1;
+    colorArray.push(`rgba(59, 130, 246, ${opacity})`);
+  }
+  return colorArray;
+};
 
 function App() {
   const [data, setData] = useState(null);
@@ -184,15 +323,19 @@ function App() {
     const labels = data.map(item => item[xAxis]);
     const values = data.map(item => item[yAxis]);
     
+    const chartColors = generateColors(values.length);
+    
     return {
       labels,
       datasets: [
         {
           label: yAxis,
           data: values,
-          backgroundColor: 'rgba(54, 162, 235, 0.5)',
-          borderColor: 'rgba(54, 162, 235, 1)',
-          borderWidth: 1,
+          backgroundColor: chartColors,
+          borderColor: chartColors.map(color => color.replace('0.7', '1')),
+          borderWidth: 2,
+          hoverBackgroundColor: chartColors.map(color => color.replace('0.7', '0.9')),
+          hoverBorderColor: chartColors.map(color => color.replace('0.7', '1')),
         },
       ],
     };
@@ -484,10 +627,10 @@ function App() {
       )}
       
       {data && (
-        <div>
-          <ControlsContainer>
+        <TableContainer>
+          <TableHeader>
             <h2>Uploaded Data Preview</h2>
-            <div>
+            <TableControls>
               <label htmlFor="visible-rows">Rows to display: </label>
               <Select
                 id="visible-rows"
@@ -501,16 +644,14 @@ function App() {
                 <option value="100">100</option>
                 <option value={data.length}>All ({data.length})</option>
               </Select>
-            </div>
-          </ControlsContainer>
+            </TableControls>
+          </TableHeader>
           
-          <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+          <StyledTable>
             <thead>
               <tr>
                 {columns.map((column) => (
-                  <th key={column} style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>
-                    {column}
-                  </th>
+                  <th key={column}>{column}</th>
                 ))}
               </tr>
             </thead>
@@ -518,16 +659,19 @@ function App() {
               {data.slice(0, visibleRows).map((row, index) => (
                 <tr key={index}>
                   {columns.map((column) => (
-                    <td key={column} style={{ border: '1px solid #ddd', padding: '8px' }}>
-                      {row[column]}
-                    </td>
+                    <td key={column}>{row[column]}</td>
                   ))}
                 </tr>
               ))}
             </tbody>
-          </table>
-          {data.length > visibleRows && <p>Showing {visibleRows} of {data.length} rows</p>}
-        </div>
+          </StyledTable>
+          
+          {data.length > visibleRows && (
+            <TableFooter>
+              Showing {visibleRows} of {data.length} rows
+            </TableFooter>
+          )}
+        </TableContainer>
       )}
     </Container>
   );
